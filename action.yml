@@ -22,7 +22,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: sudo apt-get update -y && sudo apt-get install hcloud-cli
+    - run: sudo apt-get update -y && sudo apt-get install -y hcloud-cli
       shell: bash
     - run: hcloud server create --name ${{ inputs.server-name }} --image ${{ inputs.server-image }} --type ${{ inputs.server-type }} --ssh-key ${{ inputs.ssh-key-name }}
       shell: bash
