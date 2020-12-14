@@ -21,4 +21,5 @@ inputs:
 
 runs:
   using: 'node12'
-  main: 'dist/index.js'
+  main: 'dist/deploy/index.js'
+  post: 'dist/clean/index.js'

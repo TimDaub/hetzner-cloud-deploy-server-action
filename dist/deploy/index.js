@@ -62,6 +62,34 @@ async function deploy() {
 
   if (res.status === 201) {
     console.log("Hetzner Cloud Server deployment successful");
+    const body = await res.json();
+    core.setOutput("server-id", body.server.id);
+    return res;
+  } else {
+    core.setFailed(
+      `When sending the request to Hetzner's API, an error occurred "${
+        res.statusText
+      }"`
+    );
+  }
+}
+
+async function clean() {
+  let res;
+  try {
+    res = await fetch(`${config.API}/servers/${core.getInput("server-id")}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${options.hcloudToken}`
+      }
+    });
+  } catch (err) {
+    core.setFailed(err.message);
+  }
+
+  if (res.status === 201) {
+    console.log("Hetzner Cloud Server deleted in clean up routine");
     return res;
   } else {
     core.setFailed(
@@ -73,7 +101,8 @@ async function deploy() {
 }
 
 module.exports = {
-  deploy
+  deploy,
+  clean
 };
 
 
