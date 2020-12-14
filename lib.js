@@ -51,7 +51,7 @@ async function deploy() {
 async function clean() {
   let res;
   const URI = `${config.API}/servers/${process.env.SERVER_ID}`;
-  console.log(URI);
+  console.log(process.env);
   try {
     res = await fetch(URI, {
       method: "DELETE",
