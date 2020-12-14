@@ -36,6 +36,12 @@ jobs:
 1. To know which `server-images` and `server-types` are possible, check the
    [FAQ](#FAQ).
 
+### Notes
+
+- `server-name` MUST NOT contain spaces.
+- `runs-on` MUST use a version of Ubuntu that is [>=
+  19.04](https://github.com/hetznercloud/cli#third-party-packages).
+
 ## FAQ
 
 ### How do I get all possible images to build from?
