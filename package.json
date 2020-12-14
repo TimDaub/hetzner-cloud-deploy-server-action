@@ -2,9 +2,10 @@
   "name": "hetzner-cloud-deploy-server-action",
   "version": "0.0.1",
   "description": "Deploy a Hetzner Cloud Server from a GitHub Action.",
-  "main": "index.js",
+  "main": "deploy.js",
   "scripts": {
-    "build": "ncc build index.js --license LICENSE"
+    "build": "ncc build deploy.js --license LICENSE",
+    "test": "ava"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,9 @@
     "cross-fetch": "3.0.6"
   },
   "devDependencies": {
-    "@vercel/ncc": "0.25.1"
+    "@vercel/ncc": "0.25.1",
+    "ava": "3.14.0",
+    "expressively-mocked-fetch": "0.1.1",
+    "proxyquire": "2.1.3"
   }
 }

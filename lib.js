@@ -2,6 +2,8 @@
 const core = require("@actions/core");
 const fetch = require("cross-fetch");
 
+const config = require("./config.js");
+
 const options = {
   server: {
     name: core.getInput("server-name"),
@@ -15,7 +17,7 @@ const options = {
 async function deploy() {
   let res;
   try {
-    res = await fetch("https://api.hetzner.cloud/v1/servers", {
+    res = await fetch(`${config.API}/servers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,18 +27,25 @@ async function deploy() {
         name: options.server.name,
         image: options.server.image,
         server_type: options.server.type,
-        ssh_keys: [options.server.sshKeyName]
+        ssh_keys: [options.sshKeyName]
       })
     });
   } catch (err) {
     core.setFailed(err.message);
   }
 
-  if (res.status < 300) {
+  if (res.status === 201) {
     console.log("Hetzner Cloud Server deployment successful");
+    return res;
   } else {
-    core.setFailed(res.statusText);
+    core.setFailed(
+      `When sending the request to Hetzner's API, an error occurred "${
+        res.statusText
+      }"`
+    );
   }
 }
 
-deploy();
+module.exports = {
+  deploy
+};
