@@ -1,0 +1,28 @@
+name: "TimDaub/hetzner-cloud-deploy-server-action"
+description: "Deploy a Hetzner Cloud Server from a GitHub Action"
+author: "Tim Daubenschütz"
+inputs:
+  server-name:
+    description: "The name your server should be initiated with."
+    default: "GitHub Action Server"
+    required: false
+  server-image:
+    description: "The Operating System image your server should be initiated with."
+    required: true
+  server-type:
+    description: "The Hetzner server type you want your server to be."
+    required: true
+  ssh-key-name:
+    description: "The ssh key, you want your server to be provisioned with."
+    required: true
+  hcloud-token:
+    description: "Your Hetzner Cloud API token."
+    required: true
+
+runs:
+  steps:
+    - run: apt install hcloud-cli
+    - run: hcloud server create --name ${{ inputs.server-name }} --image ${{ inputs.server-image }} --type ${{ inputs.server-type }} --ssh-key ${{ inputs.ssh-key-name }}
+      env:
+        HCLOUD_TOKEN: ${{ inputs.hcloud-token }}
+
