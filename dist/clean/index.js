@@ -77,7 +77,6 @@ async function deploy() {
 async function clean() {
   let res;
   const URI = `${config.API}/servers/${process.env.SERVER_ID}`;
-  console.log(process.env);
   try {
     res = await fetch(URI, {
       method: "DELETE",
@@ -90,7 +89,7 @@ async function clean() {
     core.setFailed(err.message);
   }
 
-  if (res.status === 201) {
+  if (res.status === 200) {
     console.log("Hetzner Cloud Server deleted in clean up routine");
     return res;
   } else {
