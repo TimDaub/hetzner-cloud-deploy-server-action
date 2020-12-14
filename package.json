@@ -1,0 +1,34 @@
+{
+  "name": "hetzner-cloud-deploy-server-action",
+  "version": "0.0.1",
+  "description": "Deploy a Hetzner Cloud Server from a GitHub Action.",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.js --license LICENSE"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TimDaub/hetzner-cloud-deploy-server-action.git"
+  },
+  "keywords": [
+    "github",
+    "action",
+    "hetzner",
+    "continous",
+    "deployment",
+    "automate"
+  ],
+  "author": "Tim Daubenschütz <tim@daubenschuetz.de> (https://timdaub.github.io)",
+  "license": "GPL-3.0-only",
+  "bugs": {
+    "url": "https://github.com/TimDaub/hetzner-cloud-deploy-server-action/issues"
+  },
+  "homepage": "https://github.com/TimDaub/hetzner-cloud-deploy-server-action#readme",
+  "dependencies": {
+    "@actions/core": "1.2.6",
+    "cross-fetch": "3.0.6"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "0.25.1"
+  }
+}
