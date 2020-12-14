@@ -22,10 +22,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v2
-      with: 
-        go-version: '^1.13.1'
-    - run: go get -u github.com/hetznercloud/cli/cmd/hcloud
+    - run: sudo apt-get update -y && sudo apt-get install hcloud-cli
+      shell: bash
+    - run: 
       shell: bash
     - run: hcloud server create --name ${{ inputs.server-name }} --image ${{ inputs.server-image }} --type ${{ inputs.server-type }} --ssh-key ${{ inputs.ssh-key-name }}
       shell: bash
