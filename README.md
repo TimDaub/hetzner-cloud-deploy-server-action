@@ -39,6 +39,7 @@ jobs:
 ### Notes
 
 - `server-name` MUST NOT contain spaces.
+- In the post action, the server get deleted.
 
 ## FAQ
 
