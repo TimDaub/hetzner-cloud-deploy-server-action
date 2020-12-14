@@ -14,11 +14,11 @@ Basic:
 ```yml
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: Ubuntu-20.04
     steps:
       - uses: TimDaub/hetzner-cloud-deploy-server-action@v1
         with:
-          server-name: "GitHub Action Server"
+          server-name: "gh-actions-server"
           server-image: "ubuntu-20.04"
           server-type: "cx11"
           ssh-key-name: "my key name"

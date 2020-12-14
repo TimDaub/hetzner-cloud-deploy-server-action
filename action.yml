@@ -4,7 +4,7 @@ author: "Tim Daubenschütz"
 inputs:
   server-name:
     description: "The name your server should be initiated with."
-    default: "GitHub Action Server"
+    default: "gh-actions-ci-server"
     required: false
   server-image:
     description: "The Operating System image your server should be initiated with."
