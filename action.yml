@@ -20,6 +20,7 @@ inputs:
     required: true
 
 runs:
+  using: "composite"
   steps:
     - run: apt install hcloud-cli
       shell: bash
