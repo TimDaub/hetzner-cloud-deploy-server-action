@@ -63,7 +63,7 @@ async function deploy() {
   if (res.status === 201) {
     console.log("Hetzner Cloud Server deployment successful");
     const body = await res.json();
-    core.setOutput("server-id", body.server.id);
+    core.exportVariable('SERVER_ID', body.server.id);
     return res;
   } else {
     core.setFailed(
@@ -77,7 +77,7 @@ async function deploy() {
 async function clean() {
   let res;
   try {
-    res = await fetch(`${config.API}/servers/${core.getInput("server-id")}`, {
+    res = await fetch(`${config.API}/servers/${process.env.SERVER_ID}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
