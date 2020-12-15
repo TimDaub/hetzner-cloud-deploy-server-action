@@ -6,7 +6,8 @@ module.exports =
 /***/ ((module) => {
 
 module.exports = {
-  API: "https://api.hetzner.cloud/v1"
+  API: "https://api.hetzner.cloud/v1",
+  userAgent: "github.com/TimDaub/hetzner-cloud-deploy-server-action"
 };
 
 
@@ -47,7 +48,8 @@ async function deploy() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${options.hcloudToken}`
+        Authorization: `Bearer ${options.hcloudToken}`,
+        "User-Agent": config.userAgent
       },
       body: JSON.stringify({
         name: options.server.name,
@@ -88,7 +90,8 @@ async function clean() {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${options.hcloudToken}`
+        Authorization: `Bearer ${options.hcloudToken}`,
+        "User-Agent": config.userAgent
       }
     });
   } catch (err) {

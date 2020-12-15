@@ -21,7 +21,8 @@ async function deploy() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${options.hcloudToken}`
+        Authorization: `Bearer ${options.hcloudToken}`,
+        "User-Agent": config.userAgent
       },
       body: JSON.stringify({
         name: options.server.name,
@@ -62,7 +63,8 @@ async function clean() {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${options.hcloudToken}`
+        Authorization: `Bearer ${options.hcloudToken}`,
+        "User-Agent": config.userAgent
       }
     });
   } catch (err) {
