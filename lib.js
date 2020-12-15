@@ -49,6 +49,11 @@ async function deploy() {
 }
 
 async function clean() {
+  if (!core.getInput("delete-server")) {
+    console.log("Aborted post cleaning procedure with delete-server: false");
+    return;
+  }
+
   let res;
   const URI = `${config.API}/servers/${process.env.SERVER_ID}`;
   try {

@@ -18,6 +18,10 @@ inputs:
   hcloud-token:
     description: "Your Hetzner Cloud API token."
     required: true
+  delete-server:
+    description: "Regulates whether a server should be deleted after the action."
+    required: false
+    default: true
 
 runs:
   using: 'node12'

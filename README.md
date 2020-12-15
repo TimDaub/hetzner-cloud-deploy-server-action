@@ -16,7 +16,7 @@ jobs:
   build:
     runs-on: Ubuntu-20.04
     steps:
-      - uses: TimDaub/hetzner-cloud-deploy-server-action@v1
+      - uses: TimDaub/hetzner-cloud-deploy-server-action@v2
         with:
           server-name: "gh-actions-server"
           server-image: "ubuntu-20.04"
@@ -30,16 +30,18 @@ jobs:
     [console.hetzner.cloud](https://console.hetzner.cloud/), select your
     project, and create a new Read & Write API token ("Security" => "API
     Tokens").
-1. Add the Hetzner API token to your repositories secrets ("Settings" =>
+1. In the "Security" tab in the Hetzner Cloud Console, you can check your ssh
+   key's name.
+1. Add the Hetzner API token to your GitHub repositories secrets ("Settings" =>
    "Secrets") as `HCLOUD_TOKEN`.
-1. Also in the "Security" tab, you can check your ssh key's name.
-1. To know which `server-images` and `server-types` are possible, check the
+1. To know which `server-images` and `server-types` Hetzner provides, check the
    [FAQ](#FAQ).
 
 ### Notes
 
 - `server-name` MUST NOT contain spaces.
-- In the post action, the server get deleted.
+- If you don't want the server to be deleted after the action's run, add
+  `delete-server: false` as an input in your workflow
 
 ## FAQ
 
