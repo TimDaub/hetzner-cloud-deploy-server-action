@@ -5,9 +5,11 @@ module.exports =
 /***/ 532:
 /***/ ((module) => {
 
+// @format
 module.exports = {
   API: "https://api.hetzner.cloud/v1",
-  userAgent: "github.com/TimDaub/hetzner-cloud-deploy-server-action"
+  USER_AGENT: "github.com/TimDaub/hetzner-cloud-deploy-server-action",
+  DEFAULT_PORT: 22
 };
 
 
@@ -28,6 +30,7 @@ deploy();
 // @format
 const core = __webpack_require__(186);
 const fetch = __webpack_require__(805);
+const isPortReachable = __webpack_require__(157);
 
 const config = __webpack_require__(532);
 
@@ -38,7 +41,8 @@ const options = {
     type: core.getInput("server-type")
   },
   sshKeyName: core.getInput("ssh-key-name"),
-  hcloudToken: core.getInput("hcloud-token")
+  hcloudToken: core.getInput("hcloud-token"),
+  timeout: core.getInput("startup-timeout")
 };
 
 async function deploy() {
@@ -49,7 +53,7 @@ async function deploy() {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${options.hcloudToken}`,
-        "User-Agent": config.userAgent
+        "User-Agent": config.USER_AGENT
       },
       body: JSON.stringify({
         name: options.server.name,
@@ -65,9 +69,24 @@ async function deploy() {
   if (res.status === 201) {
     console.log("Hetzner Cloud Server deployment successful");
     const body = await res.json();
-    core.exportVariable("SERVER_ID", body.server.id);
-    core.exportVariable("SERVER_IPV4", body.server.public_net.ipv4.ip);
-    return res;
+
+    const ipv4 = body.server.public_net.ipv4.ip;
+    const online = await isPortReachable(config.DEFAULT_PORT, {
+      host: ipv4,
+      timeout: options.timeout
+    });
+
+    if (online) {
+      core.exportVariable("SERVER_ID", body.server.id);
+      core.exportVariable("SERVER_IPV4", ipv4);
+      return res;
+    } else {
+      core.setFailed(
+        `Waited ${
+          options.timeout
+        }ms for server to come online, but it never came online.`
+      );
+    }
   } else {
     core.setFailed(
       `When sending the request to Hetzner's API, an error occurred "${
@@ -92,7 +111,7 @@ async function clean() {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${options.hcloudToken}`,
-        "User-Agent": config.userAgent
+        "User-Agent": config.USER_AGENT
       }
     });
   } catch (err) {
@@ -535,6 +554,43 @@ exports.Response = nodeFetch.Response
 
 // Needed for TypeScript consumers without esModuleInterop.
 exports.default = fetch
+
+
+/***/ }),
+
+/***/ 157:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+const net = __webpack_require__(631);
+
+module.exports = async (port, {timeout = 1000, host} = {}) => {
+	const promise = new Promise(((resolve, reject) => {
+		const socket = new net.Socket();
+
+		const onError = () => {
+			socket.destroy();
+			reject();
+		};
+
+		socket.setTimeout(timeout);
+		socket.once('error', onError);
+		socket.once('timeout', onError);
+
+		socket.connect(port, host, () => {
+			socket.end();
+			resolve();
+		});
+	}));
+
+	try {
+		await promise;
+		return true;
+	} catch (_) {
+		return false;
+	}
+};
 
 
 /***/ }),
@@ -5269,6 +5325,14 @@ module.exports = require("http");;
 
 "use strict";
 module.exports = require("https");;
+
+/***/ }),
+
+/***/ 631:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("net");;
 
 /***/ }),
 

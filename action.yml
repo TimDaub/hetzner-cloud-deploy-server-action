@@ -22,6 +22,10 @@ inputs:
     description: "Regulates whether a server should be deleted after the action."
     required: false
     default: true
+  startup-timeout:
+    description: "Gives the server some time (in Milliseconds) to boot up before ending the action."
+    required: false
+    default: 10000
 
 runs:
   using: 'node12'

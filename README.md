@@ -44,6 +44,10 @@ jobs:
   `delete-server: false` as an input in your workflow
 - The server's ipv4 is available to subsequent steps by accessing the env
   variable `SERVER_IPV4`.
+- By default, the action queries the launched server's port 22 (SSH) for
+  maximally 10 seconds. Only if this request succeeds, are next steps queued.
+  The idea is that this should allow a following step to immediately connect to
+  ssh.
 
 ## FAQ
 

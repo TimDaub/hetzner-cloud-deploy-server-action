@@ -7,7 +7,7 @@
     "build:deploy": "ncc build deploy.js --license LICENSE --out dist/deploy",
     "build:clean": "ncc build clean.js --license LICENSE --out dist/clean",
     "build": "npm run build:deploy && npm run build:clean",
-    "release:v2": "npm run build && git add --all && git commit -m \"$COMMIT_MSG\" && git push origin main && git tag -d v2 && git push --delete origin v2 && git tag -a -m \"publish js version\" v2 && git push --follow-tags",
+    "release:v2": "npm run build && git add --all && git commit -m \"$COMMIT_MSG\" && git push origin main && git tag -d v2 && git push --delete origin v2 && git tag -a -m \"$COMMIT_MSG\" v2 && git push --follow-tags",
     "test": "ava"
   },
   "repository": {
@@ -30,7 +30,8 @@
   "homepage": "https://github.com/TimDaub/hetzner-cloud-deploy-server-action#readme",
   "dependencies": {
     "@actions/core": "1.2.6",
-    "cross-fetch": "3.0.6"
+    "cross-fetch": "3.0.6",
+    "is-port-reachable": "3.0.0"
   },
   "devDependencies": {
     "@vercel/ncc": "0.25.1",
