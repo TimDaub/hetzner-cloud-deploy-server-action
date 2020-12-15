@@ -10,7 +10,7 @@ test("if a request creates a server on Hetzner Cloud", async t => {
           req.body.server_type &&
           req.body.image &&
           req.body.ssh_keys.length > 0) {
-        return res.status(201).send({server: {id: 124}}); 
+        return res.status(201).send({server: {id: 124, public_net: { ipv4: { ip: "192.0.2.1" } }}}); 
       } else {
         return res.status(422).send();
       }
@@ -27,6 +27,8 @@ test("if a request creates a server on Hetzner Cloud", async t => {
     hcloudToken: "def"
   };
 
+  let serverIdSet = false;
+  let serverIPSet = false;
   const { deploy } = proxyquire("../lib.js", {
     "./config.js": {
       API: `http://localhost:${worker.port}`
@@ -49,12 +51,18 @@ test("if a request creates a server on Hetzner Cloud", async t => {
         }
       },
       setFailed: console.error,
-      setOutput: () => {}
+      setOutput: () => {},
+      exportVariable: name => {
+        if (name === "SERVER_ID") serverIdSet = true;
+        if (name === "SERVER_IPV4") serverIPSet = true;
+      }
     }
   });
   const res = await deploy();
   t.assert(res.url.includes("localhost"));
   t.assert(res.status === 201);
+  t.true(serverIdSet);
+  t.true(serverIPSet);
 });
 
 test("if a server can be deleted in cleanup ", async t => {

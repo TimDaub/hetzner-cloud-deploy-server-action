@@ -42,6 +42,8 @@ jobs:
 - `server-name` MUST NOT contain spaces.
 - If you don't want the server to be deleted after the action's run, add
   `delete-server: false` as an input in your workflow
+- The server's ipv4 is available to subsequent steps by accessing the env
+  variable `SERVER_IPV4`.
 
 ## FAQ
 

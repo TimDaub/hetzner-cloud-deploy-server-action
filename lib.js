@@ -39,6 +39,7 @@ async function deploy() {
     console.log("Hetzner Cloud Server deployment successful");
     const body = await res.json();
     core.exportVariable("SERVER_ID", body.server.id);
+    core.exportVariable("SERVER_IPV4", body.server.public_net.ipv4.ip);
     return res;
   } else {
     core.setFailed(
