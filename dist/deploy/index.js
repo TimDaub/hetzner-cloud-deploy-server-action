@@ -75,7 +75,8 @@ async function deploy() {
 }
 
 async function clean() {
-  if (!core.getInput("delete-server")) {
+  const deleteServer = core.getInput("delete-server") === "true";
+  if (!deleteServer) {
     console.log("Aborted post cleaning procedure with delete-server: false");
     return;
   }

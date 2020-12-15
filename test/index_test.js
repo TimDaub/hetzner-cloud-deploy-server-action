@@ -85,7 +85,8 @@ test("if a server can be deleted in cleanup ", async t => {
       getInput: name => {
         switch (name) {
           case "delete-server":
-            return true;
+            // NOTE: core.getInput always returns strings.
+            return "true";
           case "server-name":
             return options.server.name;
           case "server-type":
@@ -135,7 +136,8 @@ test("if a server is kept when delete-server input is set to false", async t => 
       getInput: name => {
         switch (name) {
           case "delete-server":
-            return false;
+            // NOTE: core.getInput always returns strings
+            return "false";
           case "server-name":
             return options.server.name;
           case "server-type":
