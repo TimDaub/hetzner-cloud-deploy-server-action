@@ -27,3 +27,7 @@ runs:
   using: 'node12'
   main: 'dist/deploy/index.js'
   post: 'dist/clean/index.js'
+
+branding:
+  icon: server
+  color: "yellow"
