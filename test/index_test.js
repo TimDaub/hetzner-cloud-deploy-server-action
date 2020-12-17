@@ -3,6 +3,39 @@ const test = require("ava");
 const createWorker = require("expressively-mocked-fetch");
 const proxyquire = require("proxyquire");
 
+const { periodicRequest } = require("../lib.js");
+
+test("if periodic request detects a server coming online after 5 secs", async t => {
+  const port = 6666;
+  let worker;
+  setTimeout(async () => {
+    worker = await createWorker(`
+    // NOTE: We stop execution of the request such that it's time
+    // to come online is delayed.
+    app.get("/", async (req, res) => {
+      return res.status(200).send()
+    });
+  `, { port });
+  }, 3000);
+  t.true(await periodicRequest(port, "localhost", 5000));
+  worker.process.terminate();
+});
+
+test("if periodic request fails to detect a server coming online after timeout passed", async t => {
+  const port = 6662;
+  setTimeout(async () => {
+    let {process}= await createWorker(`
+    // NOTE: We stop execution of the request such that it's time
+    // to come online is delayed.
+    app.get("/", async (req, res) => {
+      return res.status(200).send()
+    });
+  `, { port });
+    process.terminate();
+  }, 5000);
+  t.false(await periodicRequest(port, "localhost", 2000));
+});
+
 test("if a request creates a server on Hetzner Cloud", async t => {
   const hetznerServerMock = await createWorker(`
     app.get("/", async (req, res) => {

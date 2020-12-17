@@ -31,6 +31,7 @@ module.exports = {
 const core = __webpack_require__(186);
 const fetch = __webpack_require__(805);
 const isPortReachable = __webpack_require__(157);
+const { hrtime } = __webpack_require__(765);
 
 const config = __webpack_require__(532);
 
@@ -44,6 +45,26 @@ const options = {
   hcloudToken: core.getInput("hcloud-token"),
   timeout: core.getInput("startup-timeout")
 };
+
+async function periodicRequest(port, host, timeout) {
+  return new Promise(async res => {
+    const start = hrtime.bigint();
+    let online;
+    // NOTE: hrtime.bigint() is in nano seconds, which is 1e-6 apart from milli
+    // seconds
+    while (Number(hrtime.bigint() - start) / (1000 * 1000) < timeout) {
+      online = await isPortReachable(port, {
+        host
+      });
+      if (online) {
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    return res(online);
+  });
+}
 
 async function deploy() {
   let res;
@@ -69,16 +90,19 @@ async function deploy() {
   if (res.status === 201) {
     console.log("Hetzner Cloud Server deployment successful");
     const body = await res.json();
-
+    // NOTE: We set the SERVER_ID optimistically as we definitely want to still
+    // delete the server if our periodic request fails.
     const ipv4 = body.server.public_net.ipv4.ip;
-    const online = await isPortReachable(config.DEFAULT_PORT, {
-      host: ipv4,
-      timeout: options.timeout
-    });
+    core.exportVariable("SERVER_ID", body.server.id);
+    core.exportVariable("SERVER_IPV4", ipv4);
+
+    const online = await periodicRequest(
+      config.DEFAULT_PORT,
+      ipv4,
+      options.timeout
+    );
 
     if (online) {
-      core.exportVariable("SERVER_ID", body.server.id);
-      core.exportVariable("SERVER_IPV4", ipv4);
       return res;
     } else {
       core.setFailed(
@@ -132,7 +156,8 @@ async function clean() {
 
 module.exports = {
   deploy,
-  clean
+  clean,
+  periodicRequest
 };
 
 
@@ -5349,6 +5374,14 @@ module.exports = require("os");;
 
 "use strict";
 module.exports = require("path");;
+
+/***/ }),
+
+/***/ 765:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("process");;
 
 /***/ }),
 
