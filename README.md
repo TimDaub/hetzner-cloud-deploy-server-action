@@ -40,14 +40,15 @@ jobs:
 ### Notes
 
 - `server-name` MUST NOT contain spaces.
-- If you don't want the server to be deleted after the action's run, add
-  `delete-server: false` as an input in your workflow
+- If you don't want the server to be deleted after the action has run, add
+`delete-server: false` as an input in your workflow
 - The server's ipv4 is available to subsequent steps by accessing the env
-  variable `SERVER_IPV4`.
-- By default, the action queries the launched server's port 22 (SSH) for
-  maximally 10 seconds. Only if this request succeeds, are next steps queued.
-  The idea is that this should allow a following step to immediately connect to
-  ssh.
+variable `SERVER_IPV4`.
+- By default, the action queries the to-be-launched server's port 22 (SSH) for
+maximally 20 seconds (`startup-timeout`). Continous steps are only run if the
+server has responded within this time.
+- `startup-timeout` (milliseconds) can be adjusted manually. For a `cx11`
+instance, I recommend at least 20 seconds bootup time.
 
 ## FAQ
 
@@ -104,6 +105,44 @@ $ curl \
 "cpx41"
 "cpx51"
 ```
+
+### Why is this action useful?
+
+In combination with
+[webfactory/ssh-agent](https://github.com/webfactory/ssh-agent) you can use it
+to provision a Hetzner Cloud instance completely from within a GitHub Action. An
+example:
+
+```yml
+jobs:
+  build:
+    runs-on: Ubuntu-20.04
+    steps:
+      - uses: TimDaub/hetzner-cloud-deploy-server-action@v2
+        with:
+          server-name: "gh-actions-server"
+          server-image: "ubuntu-20.04"
+          server-type: "cx11"
+          ssh-key-name: "my key name"
+          hcloud-token: ${{ secrets.HCLOUD_TOKEN }}
+			- uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - run: mkdir -p ~/.ssh/ && ssh-keyscan -H $SERVER_IPV4 >> ~/.ssh/known_hosts
+      - run: ssh root@$SERVER_IPV4 touch tim_was_here
+      - run: ssh root@$SERVER_IPV4 ls
+```
+
+After all steps have run, your provisioned Hetzner instance gets shutdown by
+the cleanup script.
+
+### Can I lose money when running this script?
+
+Yes, you certainly can. There may be instances where something within my
+script's cleanup fails and the instance remains online. So if you're planning
+to run your tests many times or if you're planning to launch huge instances,
+please make sure to double check if some instances remain running after the
+action has completed. You have been warned.
 
 ## License
 
