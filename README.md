@@ -1,8 +1,9 @@
 # Hetzner Cloud Deploy GitHub Action
 
-> Deploy a Hetzner Cloud Server from a GitHub Action.
+> Deploy a [Hetzner](https://hetzner.cloud/?ref=zHBLL3AHXP0S) Cloud Server from a GitHub Action.
 
-Hetzner is a [zero-carbon infrastructure
+[Hetzner](https://hetzner.cloud/?ref=zHBLL3AHXP0S) is a [zero-carbon
+infrastructure
 provider](https://github.com/vrde/notes/tree/master/zero-carbon).
 
 ## Usage
@@ -26,6 +27,7 @@ jobs:
 ```
 
 
+1.  [Create a Hetzner Account](https://hetzner.cloud/?ref=zHBLL3AHXP0S)
 1.  Visit the Hetzner Cloud Console at
     [console.hetzner.cloud](https://console.hetzner.cloud/), select your
     project, and create a new Read & Write API token ("Security" => "API
