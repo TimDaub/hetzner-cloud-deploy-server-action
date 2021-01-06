@@ -127,7 +127,7 @@ jobs:
           server-type: "cx11"
           ssh-key-name: "my key name"
           hcloud-token: ${{ secrets.HCLOUD_TOKEN }}
-			- uses: webfactory/ssh-agent@v0.4.1
+      - uses: webfactory/ssh-agent@v0.4.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: mkdir -p ~/.ssh/ && ssh-keyscan -H $SERVER_IPV4 >> ~/.ssh/known_hosts
