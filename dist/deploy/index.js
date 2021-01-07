@@ -18,8 +18,13 @@ module.exports = {
 /***/ 100:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-const { deploy } = __webpack_require__(909);
-deploy();
+// @format
+const { deploy, assignIP } = __webpack_require__(909);
+
+(async () => {
+  await deploy();
+  await assignIP();
+})();
 
 
 /***/ }),
@@ -31,10 +36,12 @@ deploy();
 const core = __webpack_require__(186);
 const fetch = __webpack_require__(805);
 const isPortReachable = __webpack_require__(157);
-const { hrtime } = __webpack_require__(765);
+const process = __webpack_require__(765);
+const { hrtime } = process;
 
 const config = __webpack_require__(532);
 
+// TODO: Move within each function
 const options = {
   server: {
     name: core.getInput("server-name"),
@@ -151,13 +158,57 @@ async function clean() {
         res.statusText
       }"`
     );
+    return;
+  }
+}
+
+async function assignIP() {
+  const floatingIPId = core.getInput("floating-ip-id");
+
+  if (typeof floatingIPId !== "number") {
+    core.setFailed(
+      `Not assigning server a floating IP as "floating-ip-id" input has wrong type of wasn't declared. Actual type: "${typeof floatingIPId}"`
+    );
+    return;
+  }
+
+  let res;
+  const URI = `${config.API}/floating_ips/${floatingIPId}/actions/assign`;
+  const { SERVER_ID } = process.env;
+  try {
+    res = await fetch(URI, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${options.hcloudToken}`,
+        "User-Agent": config.USER_AGENT
+      },
+      body: JSON.stringify({ server: SERVER_ID })
+    });
+  } catch (err) {
+    core.setFailed(err.message);
+  }
+
+  if (res.status === 201) {
+    console.log(
+      `Floating IP with ID "${floatingIPId}" was assigned to server with id: "${SERVER_ID}"`
+    );
+    return res;
+  } else {
+    core.setFailed(
+      `When assigning a floating ip to the server an error occurred "${
+        res.statusText
+      }"`
+    );
+    return;
   }
 }
 
 module.exports = {
   deploy,
   clean,
-  periodicRequest
+  periodicRequest,
+  assignIP
 };
 
 

@@ -51,13 +51,17 @@ maximally 20 seconds (`startup-timeout`). Continous steps are only run if the
 server has responded within this time.
 - `startup-timeout` (milliseconds) can be adjusted manually. For a `cx11`
 instance, I recommend at least 20 seconds bootup time.
+- To assign a [Floating IP](https://docs.hetzner.cloud/#floating-ips) the input
+  `floating-ip-id` can be set. See FAQ for [instruction about how to get a
+  floating IP's id](#how-do-i-get-the-id-of-a-floating-ip).
 
 ## FAQ
 
 ### How do I get all possible images to build from?
 
-You can use the Hetzner Cloud [API](https://docs.hetzner.cloud/#images-get-all-images).
-The following `curl` command works well with [jq](https://github.com/stedolan/jq):
+You can use the Hetzner Cloud
+[API](https://docs.hetzner.cloud/#images-get-all-images).  The following `curl`
+command works well with [jq](https://github.com/stedolan/jq):
 
 ```bash
 $ curl \
@@ -77,9 +81,9 @@ $ curl \
 
 ### How do I get all possible server types?
 
-
-You can use the Hetzner Cloud [API](https://docs.hetzner.cloud/#server-types-get-all-server-types).
-The following `curl` command works well with [jq](https://github.com/stedolan/jq):
+You can use the Hetzner Cloud
+[API](https://docs.hetzner.cloud/#server-types-get-all-server-types).  The
+following `curl` command works well with [jq](https://github.com/stedolan/jq):
 
 ```bash
 $ curl \
@@ -106,6 +110,21 @@ $ curl \
 "cpx31"
 "cpx41"
 "cpx51"
+```
+
+### How do I get the ID of a Floating IP?
+
+You can use the Hetzner Cloud
+[API](https://docs.hetzner.cloud/#floating-ips-get-all-floating-ips).  The
+following `curl` command works well with [jq](https://github.com/stedolan/jq):
+
+```bash
+$ curl -s \
+  -H "Authorization: Bearer $API_TOKEN" \
+  'https://api.hetzner.cloud/v1/floating_ips' | jq '.floating_ips[].id'
+1
+2
+3
 ```
 
 ### Why is this action useful?

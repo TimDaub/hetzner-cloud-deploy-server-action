@@ -1,2 +1,7 @@
-const { deploy } = require("./lib.js");
-deploy();
+// @format
+const { deploy, assignIP } = require("./lib.js");
+
+(async () => {
+  await deploy();
+  await assignIP();
+})();
