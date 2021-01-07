@@ -157,6 +157,18 @@ jobs:
 After all steps have run, your provisioned Hetzner instance gets shutdown by
 the cleanup script.
 
+### How do I use this Action with e.g. a Domain Name?
+
+All Hetzner servers created with this Action get assigned an arbitrary IP, which
+can make it difficult to immediately set it as an A-record on a domain you own.
+
+Hetzner, however, provides a feature called [Floating
+IPs](https://docs.hetzner.com/cloud/floating-ips/faq/), that allows a user to
+assign a static IP to a server.
+
+By setting your DNS A-record to a floating IP and adding its ID as an input,
+you can hence make your launched server predictably-addressable.
+
 ### Can I lose money when running this script?
 
 Yes, you certainly can. There may be instances where something within my
