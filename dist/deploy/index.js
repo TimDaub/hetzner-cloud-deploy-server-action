@@ -163,9 +163,9 @@ async function clean() {
 }
 
 async function assignIP() {
-  const floatingIPId = core.getInput("floating-ip-id");
+  const floatingIPId = parseInt(core.getInput("floating-ip-id"), 10);
 
-  if (typeof floatingIPId !== "number") {
+  if (isNaN(floatingIPId)) {
     core.setFailed(
       `Not assigning server a floating IP as "floating-ip-id" input has wrong type of wasn't declared. Actual type: "${typeof floatingIPId}"`
     );
