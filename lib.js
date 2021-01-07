@@ -129,11 +129,16 @@ async function clean() {
 }
 
 async function assignIP() {
-  const floatingIPId = parseInt(core.getInput("floating-ip-id"), 10);
+  const floatingIPId = core.getInput("floating-ip-id");
+  if (!floatingIPId) {
+    console.info("No value for floating-ip-id input was found. Hence skipping this step.");
+    return;
+  }
 
-  if (isNaN(floatingIPId)) {
+  const parsedIPId  = parseInt(floatingIPId, 10);
+  if (isNaN(parsedIPId)) {
     core.setFailed(
-      `Not assigning server a floating IP as "floating-ip-id" input has wrong type of wasn't declared. Actual type: "${typeof floatingIPId}"`
+      `Not assigning server a floating-ip-id as it asn't parseable as an integer. Unparsed value: ${floatingIPId}`
     );
     return;
   }

@@ -245,6 +245,27 @@ test("if assigning an IP fails inputs that are not a number", async t => {
   await assignIP();
 });
 
+test("if non-assigned floating-ip-id stops assigning procedure silently", async t => {
+  const floatingIPId = undefined;
+  const { assignIP } = proxyquire("../lib.js", {
+    "cross-fetch": () => t.fail(),
+    "@actions/core": {
+      getInput: name => {
+        switch (name) {
+          case "floating-ip-id":
+            return floatingIPId;
+          default:
+            return "mock value";
+        }
+      },
+      setFailed: () => t.fail()
+    }
+  });
+
+  await assignIP();
+  t.pass();
+});
+
 test("if assigning a floating IP to a server is possible", async t => {
   const floatingIPId = 1337;
   const SERVER_ID = 1345;
