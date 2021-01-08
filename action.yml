@@ -25,7 +25,7 @@ inputs:
   startup-timeout:
     description: "Gives the server some time (in Milliseconds) to boot up before ending the action."
     required: false
-    default: 20000
+    default: 40000
   floating-ip-id:
     description: "Allows to assign a floating IP to the server after deployment"
     required: false
