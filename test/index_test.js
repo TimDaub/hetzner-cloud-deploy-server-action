@@ -256,14 +256,14 @@ test("if assigning a floating IP to a server is possible", async t => {
         res.status(200).json({
           action: {
             id: actionId,
-            progress: 50
+            status: "running"
           }
         });
       } else if (c === 1) {
         res.status(200).json({
           action: {
             id: actionId,
-            progress: 100
+            status: "success"
           }
         });
       }
@@ -315,14 +315,14 @@ test("if assigning a floating IP to a server is possible", async t => {
   t.pass();
 });
 
-test("getting the progress of assigning a floating IP", async t => {
+test("getting the status of assigning a floating IP", async t => {
   const worker = await createWorker(`
     const actionId = 4321;
     app.get("/floating_ips/:floatingIPId/actions/:actionId", (req, res) => {
       return res.status(200).json({
         action: {
           id: actionId,
-          progress: 50
+          status: "success"
         }
       });
     });
@@ -333,8 +333,8 @@ test("getting the progress of assigning a floating IP", async t => {
     }
   });
 
-  const progress = await getAssignmentProgress(1234, 4321)();
-  t.assert(progress === 50);
+  const status = await getAssignmentProgress(1234, 4321)();
+  t.assert(status === "success");
 });
 
 test("getting a floating ip", async t => {

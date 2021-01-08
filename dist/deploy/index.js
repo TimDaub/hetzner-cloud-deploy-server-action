@@ -165,7 +165,7 @@ function getAssignmentProgress(floatingIPId, actionId) {
 
     if (res.status === 200) {
       const body = await res.json();
-      return body.action.progress;
+      return body.action.status;
     } else {
       core.setFailed(
         `When trying to check on the ip's assignment progress, an error occurred: ${
@@ -251,10 +251,10 @@ async function assignIP() {
   if (res.status === 201) {
     const body = await res.json();
 
-    const expectedProgress = 100;
+    const expectedStatus = "success"
     const done = await periodicExecution(
       getAssignmentProgress(parsedIPId, body.action.id),
-      expectedProgress,
+      expectedStatus,
       assignmentTimeout
     );
 
