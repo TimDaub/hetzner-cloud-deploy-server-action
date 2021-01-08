@@ -87,7 +87,7 @@ async function deploy() {
 
     try {
       online = await periodicExecution(fn, true, options.timeout);
-    } catch(err) {
+    } catch (err) {
       if (err instanceof TimeoutError) {
         online = false;
       } else {
