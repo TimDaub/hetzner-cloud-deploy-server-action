@@ -2,7 +2,7 @@
 const core = require("@actions/core");
 const fetch = require("cross-fetch");
 const isPortReachable = require("is-port-reachable");
-const periodicExecution = require("periodic-execution");
+const { periodicExecution, TimeoutError } = require("periodic-execution");
 const process = require("process");
 
 const config = require("./config.js");
@@ -54,7 +54,17 @@ async function deploy() {
         ipv4
       });
 
-    const online = await periodicExecution(fn, true, options.timeout);
+    let online;
+
+    try {
+      online = await periodicExecution(fn, true, options.timeout);
+    } catch(err) {
+      if (err instanceof TimeoutError) {
+        online = false;
+      } else {
+        throw err;
+      }
+    }
 
     if (online) {
       return res;
@@ -62,7 +72,7 @@ async function deploy() {
       core.setFailed(
         `Waited ${
           options.timeout
-        }ms for server to come online, but it never came online.`
+        }ms for server to come online, but it never came online. Value: "${online}"`
       );
     }
   } else {
@@ -144,33 +154,29 @@ function getAssignmentProgress(floatingIPId, actionId) {
 }
 
 async function getFloatingIP(id) {
-    const URI = `${
-      config.API
-    }/floating_ips/${id}`;
+  const URI = `${config.API}/floating_ips/${id}`;
 
-    try {
-      res = await fetch(URI, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${options.hcloudToken}`,
-          "User-Agent": config.USER_AGENT
-        }
-      });
-    } catch (err) {
-      core.setFailed(err.message);
-    }
+  try {
+    res = await fetch(URI, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${options.hcloudToken}`,
+        "User-Agent": config.USER_AGENT
+      }
+    });
+  } catch (err) {
+    core.setFailed(err.message);
+  }
 
   if (res.status === 200) {
     const body = await res.json();
     return body.floating_ip.ip;
   } else {
-      core.setFailed(
-        `When trying to get a floating ip, an error occurred ${
-          res.status
-        }`
-      );
-      return;
+    core.setFailed(
+      `When trying to get a floating ip, an error occurred ${res.status}`
+    );
+    return;
   }
 }
 
@@ -217,14 +223,23 @@ async function assignIP() {
   if (res.status === 201) {
     const body = await res.json();
 
-    const expectedStatus = "success"
-    const done = await periodicExecution(
-      getAssignmentProgress(parsedIPId, body.action.id),
-      expectedStatus,
-      assignmentTimeout
-    );
+    const expectedStatus = "success";
+    let _status;
+    try {
+      _status = await periodicExecution(
+        getAssignmentProgress(parsedIPId, body.action.id),
+        expectedStatus,
+        assignmentTimeout
+      );
+    } catch (err) {
+      if (err instanceof TimeoutError) {
+        _status = "timeout";
+      } else {
+        throw err;
+      }
+    }
 
-    if (done) {
+    if (_status === "success") {
       const floatingIP = await getFloatingIP(parsedIPId);
       core.exportVariable("SERVER_FLOATING_IPV4", floatingIP);
       core.info(
@@ -232,7 +247,9 @@ async function assignIP() {
       );
       return;
     } else {
-      core.setFailed(`Timed out while trying to set the server's floating IP.`);
+      core.setFailed(
+        `An error happened while trying to get the IP's assignment progress. Status: "${_status}"`
+      );
       return;
     }
   } else {

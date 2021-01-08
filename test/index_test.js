@@ -357,3 +357,75 @@ test("getting a floating ip", async t => {
 
   t.assert(await getFloatingIP(1234) === ip);
 });
+
+test("if appropriate errors are thrown when assigning IP fails", async t => {
+  const floatingIPId = 1337;
+  const floatingIP = "127.0.0.1";
+  const SERVER_ID = 1234;
+  const hcloudToken = "abc";
+  const IPAssignmentTimeout = 2000;
+
+  const worker = await createWorker(`
+    const actionId = 4321;
+    app.post("/floating_ips/:floatingIPId/actions/assign", (req, res) => {
+      if (typeof req.body.server === "number") {
+        return res.status(201).json({
+          action: {
+            id: actionId
+          }
+        });
+      } else {
+        return res.status(400).send();
+      }
+    });
+
+    app.get("/floating_ips/:floatingIPId/actions/:actionId", (req, res) => {
+      res.status(200).json({
+        action: {
+          id: actionId,
+          status: "error"
+        }
+      });
+    });
+
+    app.get("/floating_ips/:floatingIPId", (req, res) => {
+      return res.status(200).json({
+        floating_ip: {
+          ip: "${floatingIP}"
+        }
+      });
+    });
+  `, { requestCount: 4 });
+
+  const { assignIP } = proxyquire("../lib.js", {
+    "./config.js": {
+      API: `http://localhost:${worker.port}`
+    },
+    process: {
+      env: {
+        SERVER_ID
+      }
+    },
+    "@actions/core": {
+      getInput: name => {
+        switch (name) {
+          case "floating-ip-id":
+            return floatingIPId;
+          case "hcloud-token":
+            return hcloudToken;
+          case "floating-ip-assignment-timeout":
+            return IPAssignmentTimeout;
+          default:
+            return "mock value";
+        }
+      },
+      setFailed: () => t.pass(),
+      exportVariable: (name, val) => {
+        t.assert(name === "SERVER_FLOATING_IPV4");
+        t.assert(val === floatingIP);
+      }
+    }
+  });
+
+  const res = await assignIP();
+});

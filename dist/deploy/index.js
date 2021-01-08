@@ -36,7 +36,7 @@ const { deploy, assignIP } = __webpack_require__(909);
 const core = __webpack_require__(186);
 const fetch = __webpack_require__(805);
 const isPortReachable = __webpack_require__(157);
-const periodicExecution = __webpack_require__(660);
+const { periodicExecution, TimeoutError } = __webpack_require__(660);
 const process = __webpack_require__(765);
 
 const config = __webpack_require__(532);
@@ -88,7 +88,17 @@ async function deploy() {
         ipv4
       });
 
-    const online = await periodicExecution(fn, true, options.timeout);
+    let online;
+
+    try {
+      online = await periodicExecution(fn, true, options.timeout);
+    } catch(err) {
+      if (err instanceof TimeoutError) {
+        online = false;
+      } else {
+        throw err;
+      }
+    }
 
     if (online) {
       return res;
@@ -96,7 +106,7 @@ async function deploy() {
       core.setFailed(
         `Waited ${
           options.timeout
-        }ms for server to come online, but it never came online.`
+        }ms for server to come online, but it never came online. Value: "${online}"`
       );
     }
   } else {
@@ -178,33 +188,29 @@ function getAssignmentProgress(floatingIPId, actionId) {
 }
 
 async function getFloatingIP(id) {
-    const URI = `${
-      config.API
-    }/floating_ips/${id}`;
+  const URI = `${config.API}/floating_ips/${id}`;
 
-    try {
-      res = await fetch(URI, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${options.hcloudToken}`,
-          "User-Agent": config.USER_AGENT
-        }
-      });
-    } catch (err) {
-      core.setFailed(err.message);
-    }
+  try {
+    res = await fetch(URI, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${options.hcloudToken}`,
+        "User-Agent": config.USER_AGENT
+      }
+    });
+  } catch (err) {
+    core.setFailed(err.message);
+  }
 
   if (res.status === 200) {
     const body = await res.json();
     return body.floating_ip.ip;
   } else {
-      core.setFailed(
-        `When trying to get a floating ip, an error occurred ${
-          res.status
-        }`
-      );
-      return;
+    core.setFailed(
+      `When trying to get a floating ip, an error occurred ${res.status}`
+    );
+    return;
   }
 }
 
@@ -251,14 +257,23 @@ async function assignIP() {
   if (res.status === 201) {
     const body = await res.json();
 
-    const expectedStatus = "success"
-    const done = await periodicExecution(
-      getAssignmentProgress(parsedIPId, body.action.id),
-      expectedStatus,
-      assignmentTimeout
-    );
+    const expectedStatus = "success";
+    let _status;
+    try {
+      _status = await periodicExecution(
+        getAssignmentProgress(parsedIPId, body.action.id),
+        expectedStatus,
+        assignmentTimeout
+      );
+    } catch (err) {
+      if (err instanceof TimeoutError) {
+        _status = "timeout";
+      } else {
+        throw err;
+      }
+    }
 
-    if (done) {
+    if (_status === "success") {
       const floatingIP = await getFloatingIP(parsedIPId);
       core.exportVariable("SERVER_FLOATING_IPV4", floatingIP);
       core.info(
@@ -266,7 +281,9 @@ async function assignIP() {
       );
       return;
     } else {
-      core.setFailed(`Timed out while trying to set the server's floating IP.`);
+      core.setFailed(
+        `An error happened while trying to get the IP's assignment progress. Status: "${_status}"`
+      );
       return;
     }
   } else {
@@ -2414,10 +2431,22 @@ let defaultOptions = {
   interval: 1000
 };
 
+class TimeoutError extends Error {
+  constructor(...params) {
+    super(...params);
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, TimeoutError);
+    }
+
+    this.name = "TimeoutError";
+  }
+}
+
 async function periodicExecution(fn, expected, timeout, options) {
   options = { ...defaultOptions, ...options };
 
-  return new Promise(async result => {
+  return new Promise(async (resolve, reject) => {
     const start = hrtime.bigint();
     let outcome;
     // NOTE: hrtime.bigint() is in nano seconds, which is 1e-6 apart from milli
@@ -2425,16 +2454,24 @@ async function periodicExecution(fn, expected, timeout, options) {
     while (Number(hrtime.bigint() - start) / (1000 * 1000) < timeout) {
       outcome = await fn();
       if (outcome === expected) {
-        break;
+        return resolve(outcome);
       }
 
       await new Promise(resolve => setTimeout(resolve, options.interval));
     }
-    return result(outcome);
+
+    return reject(
+      new TimeoutError(
+        `Execution didn't reach expected result. Outcome: "${outcome}"`
+      )
+    );
   });
 }
 
-module.exports = periodicExecution;
+module.exports = {
+  periodicExecution,
+  TimeoutError
+};
 
 
 /***/ }),
