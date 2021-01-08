@@ -143,6 +143,37 @@ function getAssignmentProgress(floatingIPId, actionId) {
   };
 }
 
+async function getFloatingIP(id) {
+    const URI = `${
+      config.API
+    }/floating_ips/${id}`;
+
+    try {
+      res = await fetch(URI, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${options.hcloudToken}`,
+          "User-Agent": config.USER_AGENT
+        }
+      });
+    } catch (err) {
+      core.setFailed(err.message);
+    }
+
+  if (res.status === 200) {
+    const body = await res.json();
+    return body.floating_ip.ip;
+  } else {
+      core.setFailed(
+        `When trying to get a floating ip, an error occurred ${
+          res.status
+        }`
+      );
+      return;
+  }
+}
+
 async function assignIP() {
   const floatingIPId = core.getInput("floating-ip-id");
   if (!floatingIPId) {
@@ -194,6 +225,8 @@ async function assignIP() {
     );
 
     if (done) {
+      const floatingIP = await getFloatingIP(parsedIPId);
+      core.exportVariable("SERVER_FLOATING_IPV4", floatingIP);
       core.info(
         `Floating IP with ID "${parsedIPId}" was assigned to server with id: "${SERVER_ID}"`
       );
@@ -216,5 +249,6 @@ module.exports = {
   deploy,
   clean,
   assignIP,
-  getAssignmentProgress
+  getAssignmentProgress,
+  getFloatingIP
 };

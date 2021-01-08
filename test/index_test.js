@@ -231,6 +231,7 @@ test("if non-assigned floating-ip-id stops assigning procedure silently", async 
 
 test("if assigning a floating IP to a server is possible", async t => {
   const floatingIPId = 1337;
+  const floatingIP = "127.0.0.1";
   const SERVER_ID = 1234;
   const hcloudToken = "abc";
 
@@ -269,7 +270,15 @@ test("if assigning a floating IP to a server is possible", async t => {
       c++;
       return;
     });
-  `, { requestCount: 3 });
+
+    app.get("/floating_ips/:floatingIPId", (req, res) => {
+      return res.status(200).json({
+        floating_ip: {
+          ip: "${floatingIP}"
+        }
+      });
+    });
+  `, { requestCount: 4 });
 
   const { assignIP } = proxyquire("../lib.js", {
     "./config.js": {
@@ -291,7 +300,11 @@ test("if assigning a floating IP to a server is possible", async t => {
             return "mock value";
         }
       },
-      setFailed: () => t.fail()
+      setFailed: () => t.fail(),
+      exportVariable: (name, val) => {
+        t.assert(name === "SERVER_FLOATING_IPV4");
+        t.assert(val === floatingIP);
+      }
     }
   });
 
@@ -302,28 +315,15 @@ test("if assigning a floating IP to a server is possible", async t => {
 test("getting the progress of assigning a floating IP", async t => {
   const worker = await createWorker(`
     const actionId = 4321;
-    let c = 0;
     app.get("/floating_ips/:floatingIPId/actions/:actionId", (req, res) => {
-      if (c === 0) {
-        res.status(200).json({
-          action: {
-            id: actionId,
-            progress: 50
-          }
-        });
-      } else if (c === 1) {
-        res.status(200).json({
-          action: {
-            id: actionId,
-            progress: 100
-          }
-        });
-      }
-
-      c++;
-      return;
+      return res.status(200).json({
+        action: {
+          id: actionId,
+          progress: 50
+        }
+      });
     });
-  `, { requestCount: 2 });
+  `);
   const { getAssignmentProgress } = proxyquire("../lib.js", {
     "./config.js": {
       API: `http://localhost:${worker.port}`
@@ -332,4 +332,25 @@ test("getting the progress of assigning a floating IP", async t => {
 
   const progress = await getAssignmentProgress(1234, 4321)();
   t.assert(progress === 50);
+});
+
+test("getting a floating ip", async t => {
+
+  const ip = "127.0.0.1";
+  const worker = await createWorker(`
+    app.get("/floating_ips/:floatingIPId", (req, res) => {
+      return res.status(200).json({
+        floating_ip: {
+          ip: "${ip}"
+        }
+      });
+    });
+  `);
+  const { getFloatingIP } = proxyquire("../lib.js", {
+    "./config.js": {
+      API: `http://localhost:${worker.port}`
+    }
+  });
+
+  t.assert(await getFloatingIP(1234) === ip);
 });

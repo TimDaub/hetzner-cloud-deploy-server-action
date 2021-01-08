@@ -54,6 +54,11 @@ instance, I recommend at least 20 seconds bootup time.
 - To assign a [Floating IP](https://docs.hetzner.cloud/#floating-ips) the input
   `floating-ip-id` can be set. See FAQ for [instruction about how to get a
   floating IP's id](#how-do-i-get-the-id-of-a-floating-ip).
+- When assigning an instance to a floating IP, the [Hetzner
+  recommends](https://docs.hetzner.com/cloud/floating-ips/faq/) configuring a
+  temporary or permanent IPV4 on the machine.
+- After a server has been successfully assigned a floating IP, it is exported
+  as an environment variable called `SERVER_FLOATING_IPV4`.
 
 ## FAQ
 
