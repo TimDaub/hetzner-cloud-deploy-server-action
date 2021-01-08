@@ -217,10 +217,6 @@ async function assignIP() {
     );
     return;
   }
-  const assignmentTimeout = parseInt(
-    core.getInput("floating-ip-assignment-timeout"),
-    10
-  );
 
   const parsedIPId = parseInt(floatingIPId, 10);
   if (isNaN(parsedIPId)) {
@@ -251,8 +247,18 @@ async function assignIP() {
 
   if (res.status === 201) {
     const body = await res.json();
+    core.info(
+      `Successfully created assignment action for IP "${parsedIPId}" and SERVER_ID "${SERVER_ID}"`
+    );
 
     const expectedStatus = "success";
+    const assignmentTimeout = parseInt(
+      core.getInput("floating-ip-assignment-timeout"),
+      10
+    );
+    core.info(
+      `Attempting to get the status of the assignment process with expected status: "${expectedStatus}" and timeout: "${assignmentTimeout}"`
+    );
     let _status;
     try {
       _status = await periodicExecution(
@@ -261,6 +267,7 @@ async function assignIP() {
         assignmentTimeout
       );
     } catch (err) {
+      core.error(err.toString());
       if (err instanceof TimeoutError) {
         _status = "timeout";
       } else {
