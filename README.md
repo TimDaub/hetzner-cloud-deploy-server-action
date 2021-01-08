@@ -174,6 +174,41 @@ assign a static IP to a server.
 By setting your DNS A-record to a floating IP and adding its ID as an input,
 you can hence make your launched server predictably-addressable.
 
+Specifically, working with floating IPs can get a bit messy. Here's an example
+configuration.
+
+```yml
+jobs:
+  build:
+    runs-on: Ubuntu-20.04
+    steps:
+      - uses: TimDaub/hetzner-cloud-deploy-server-action@v2
+        with:
+          server-name: "server"
+          server-image: "ubuntu-20.04"
+          server-type: "cx11"
+          ssh-key-name: "my key name"
+          hcloud-token: ${{ secrets.HCLOUD_TOKEN }}
+          startup-timeout: 40000
+          floating-ip-id: my-id
+          floating-ip-assignment-timeout: 30000
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - run: mkdir -p ~/.ssh/ && ssh-keyscan -H $SERVER_IPV4 >> ~/.ssh/known_hosts
+      - run: ssh root@$SERVER_IPV4 "ip addr add $SERVER_FLOATING_IPV4 dev eth0"
+      - run: mkdir -p ~/.ssh/ && ssh-keyscan -H $SERVER_FLOATING_IPV4 >> ~/.ssh/known_hosts
+      - run: ssh root@$SERVER_FLOATING_IPV4 touch tim_was_here
+      - run: ssh root@$SERVER_FLOATING_IPV4 ls
+
+```
+
+Note how we use `ssh-keyscan` twice here to configure the GitHub Action server
+for once with the `SERVER_IPV4` but then later also with the
+`SERVER_FLOATING_IPV4`.
+This specific step is optional, but it allows a subsequent step to directly
+connect to the floating IP.
+
 ### Can I lose money when running this script?
 
 Yes, you certainly can. There may be instances where something within my
