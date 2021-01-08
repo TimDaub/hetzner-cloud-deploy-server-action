@@ -78,16 +78,20 @@ async function deploy() {
     core.exportVariable("SERVER_ID", body.server.id);
     core.exportVariable("SERVER_IPV4", ipv4);
 
-    const fn = async () =>
-      await isPortReachable(config.DEFAULT_PORT, {
-        ipv4
+    const fn = () => {
+      core.debug(
+        `Trying to connect to server on default port "${config.DEFAULT_PORT}"`
+      );
+      return isPortReachable(config.DEFAULT_PORT, {
+        host: ipv4
       });
+    };
 
     let online;
-
     try {
       online = await periodicExecution(fn, true, options.timeout);
     } catch (err) {
+      core.error(err.toString());
       if (err instanceof TimeoutError) {
         online = false;
       } else {

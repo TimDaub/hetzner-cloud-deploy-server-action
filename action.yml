@@ -32,7 +32,7 @@ inputs:
   floating-ip-assignment-timeout:
     description: "Gives Hetzner some time (in Ms) to assign an IP to a server."
     required: false
-    default: 30000
+    default: 60000
 
 runs:
   using: 'node12'
