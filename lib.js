@@ -2,8 +2,8 @@
 const core = require("@actions/core");
 const fetch = require("cross-fetch");
 const isPortReachable = require("is-port-reachable");
+const periodicExecution = require("periodic-execution");
 const process = require("process");
-const { hrtime } = process;
 
 const config = require("./config.js");
 
@@ -18,26 +18,6 @@ const options = {
   hcloudToken: core.getInput("hcloud-token"),
   timeout: core.getInput("startup-timeout")
 };
-
-async function periodicRequest(port, host, timeout) {
-  return new Promise(async res => {
-    const start = hrtime.bigint();
-    let online;
-    // NOTE: hrtime.bigint() is in nano seconds, which is 1e-6 apart from milli
-    // seconds
-    while (Number(hrtime.bigint() - start) / (1000 * 1000) < timeout) {
-      online = await isPortReachable(port, {
-        host
-      });
-      if (online) {
-        break;
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-
-    return res(online);
-  });
-}
 
 async function deploy() {
   let res;
@@ -61,7 +41,7 @@ async function deploy() {
   }
 
   if (res.status === 201) {
-    console.log("Hetzner Cloud Server deployment successful");
+    core.info("Hetzner Cloud Server deployment successful");
     const body = await res.json();
     // NOTE: We set the SERVER_ID optimistically as we definitely want to still
     // delete the server if our periodic request fails.
@@ -69,11 +49,12 @@ async function deploy() {
     core.exportVariable("SERVER_ID", body.server.id);
     core.exportVariable("SERVER_IPV4", ipv4);
 
-    const online = await periodicRequest(
-      config.DEFAULT_PORT,
-      ipv4,
-      options.timeout
-    );
+    const fn = async () =>
+      await isPortReachable(config.DEFAULT_PORT, {
+        ipv4
+      });
+
+    const online = await periodicExecution(fn, true, options.timeout);
 
     if (online) {
       return res;
@@ -96,7 +77,7 @@ async function deploy() {
 async function clean() {
   const deleteServer = core.getInput("delete-server") === "true";
   if (!deleteServer) {
-    console.log("Aborted post cleaning procedure with delete-server: false");
+    core.warning("Aborted post cleaning procedure with delete-server: false");
     return;
   }
 
@@ -116,7 +97,7 @@ async function clean() {
   }
 
   if (res.status === 200) {
-    console.log("Hetzner Cloud Server deleted in clean up routine");
+    core.info("Hetzner Cloud Server deleted in clean up routine");
     return res;
   } else {
     core.setFailed(
@@ -128,14 +109,54 @@ async function clean() {
   }
 }
 
+function getAssignmentProgress(floatingIPId, actionId) {
+  return async () => {
+    const URI = `${
+      config.API
+    }/floating_ips/${floatingIPId}/actions/${actionId}`;
+
+    let res;
+    try {
+      res = await fetch(URI, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${options.hcloudToken}`,
+          "User-Agent": config.USER_AGENT
+        }
+      });
+    } catch (err) {
+      core.setFailed(err.message);
+    }
+
+    if (res.status === 200) {
+      const body = await res.json();
+      return body.action.progress;
+    } else {
+      core.setFailed(
+        `When trying to check on the ip's assignment progress, an error occurred: ${
+          res.status
+        }`
+      );
+      return;
+    }
+  };
+}
+
 async function assignIP() {
   const floatingIPId = core.getInput("floating-ip-id");
   if (!floatingIPId) {
-    console.info("No value for floating-ip-id input was found. Hence skipping this step.");
+    core.warning(
+      "No value for floating-ip-id input was found. Hence skipping this step."
+    );
     return;
   }
+  const assignmentTimeout = parseInt(
+    core.getInput("floating-ip-assignment-timeout"),
+    10
+  );
 
-  const parsedIPId  = parseInt(floatingIPId, 10);
+  const parsedIPId = parseInt(floatingIPId, 10);
   if (isNaN(parsedIPId)) {
     core.setFailed(
       `Not assigning server a floating-ip-id as it asn't parseable as an integer. Unparsed value: ${floatingIPId}`
@@ -144,8 +165,10 @@ async function assignIP() {
   }
 
   let res;
-  const URI = `${config.API}/floating_ips/${floatingIPId}/actions/assign`;
-  const { SERVER_ID } = process.env;
+  const URI = `${config.API}/floating_ips/${parsedIPId}/actions/assign`;
+  let { SERVER_ID } = process.env;
+  SERVER_ID = parseInt(SERVER_ID, 10);
+
   try {
     res = await fetch(URI, {
       method: "POST",
@@ -161,10 +184,24 @@ async function assignIP() {
   }
 
   if (res.status === 201) {
-    console.log(
-      `Floating IP with ID "${floatingIPId}" was assigned to server with id: "${SERVER_ID}"`
+    const body = await res.json();
+
+    const expectedProgress = 100;
+    const done = periodicExecution(
+      getAssignmentProgress(parsedIPId, body.action.id),
+      expectedProgress,
+      assignmentTimeout
     );
-    return res;
+
+    if (done) {
+      core.info(
+        `Floating IP with ID "${parsedIPId}" was assigned to server with id: "${SERVER_ID}"`
+      );
+      return;
+    } else {
+      core.setFailed(`Timed out while trying to set the server's floating IP.`);
+      return;
+    }
   } else {
     core.setFailed(
       `When assigning a floating ip to the server an error occurred "${
@@ -178,6 +215,6 @@ async function assignIP() {
 module.exports = {
   deploy,
   clean,
-  periodicRequest,
-  assignIP
+  assignIP,
+  getAssignmentProgress
 };

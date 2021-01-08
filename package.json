@@ -31,7 +31,8 @@
   "dependencies": {
     "@actions/core": "1.2.6",
     "cross-fetch": "3.0.6",
-    "is-port-reachable": "3.0.0"
+    "is-port-reachable": "3.0.0",
+    "periodic-execution": "0.0.1"
   },
   "devDependencies": {
     "@vercel/ncc": "0.25.1",

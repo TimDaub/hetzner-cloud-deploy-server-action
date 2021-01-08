@@ -3,44 +3,7 @@ const test = require("ava");
 const createWorker = require("expressively-mocked-fetch");
 const proxyquire = require("proxyquire");
 
-const { periodicRequest, assignIP } = require("../lib.js");
-
-test("if periodic request detects a server coming online after 5 secs", async t => {
-  const port = 6666;
-  let worker;
-  setTimeout(async () => {
-    worker = await createWorker(
-      `
-    // NOTE: We stop execution of the request such that it's time
-    // to come online is delayed.
-    app.get("/", async (req, res) => {
-      return res.status(200).send()
-    });
-  `,
-      { port }
-    );
-  }, 3000);
-  t.true(await periodicRequest(port, "localhost", 5000));
-  worker.process.terminate();
-});
-
-test("if periodic request fails to detect a server coming online after timeout passed", async t => {
-  const port = 6662;
-  setTimeout(async () => {
-    let { process } = await createWorker(
-      `
-    // NOTE: We stop execution of the request such that it's time
-    // to come online is delayed.
-    app.get("/", async (req, res) => {
-      return res.status(200).send()
-    });
-  `,
-      { port }
-    );
-    process.terminate();
-  }, 5000);
-  t.false(await periodicRequest(port, "localhost", 2000));
-});
+const { assignIP } = require("../lib.js");
 
 test("if a request creates a server on Hetzner Cloud", async t => {
   const hetznerServerMock = await createWorker(`
@@ -268,18 +231,45 @@ test("if non-assigned floating-ip-id stops assigning procedure silently", async 
 
 test("if assigning a floating IP to a server is possible", async t => {
   const floatingIPId = 1337;
-  const SERVER_ID = 1345;
+  const SERVER_ID = 1234;
   const hcloudToken = "abc";
 
   const worker = await createWorker(`
-    app.post("/floating_ips/:IPId/actions/assign", (req, res) => {
+    const actionId = 4321;
+    app.post("/floating_ips/:floatingIPId/actions/assign", (req, res) => {
       if (typeof req.body.server === "number") {
-        return res.status(201).send();
+        return res.status(201).json({
+          action: {
+            id: actionId
+          }
+        });
       } else {
         return res.status(400).send();
       }
     });
-  `);
+
+    let c = 0;
+    app.get("/floating_ips/:floatingIPId/actions/:actionId", (req, res) => {
+      if (c === 0) {
+        res.status(200).json({
+          action: {
+            id: actionId,
+            progress: 50
+          }
+        });
+      } else if (c === 1) {
+        res.status(200).json({
+          action: {
+            id: actionId,
+            progress: 100
+          }
+        });
+      }
+
+      c++;
+      return;
+    });
+  `, { requestCount: 3 });
 
   const { assignIP } = proxyquire("../lib.js", {
     "./config.js": {
@@ -306,5 +296,40 @@ test("if assigning a floating IP to a server is possible", async t => {
   });
 
   const res = await assignIP();
-  t.assert(res.status === 201);
+  t.pass();
+});
+
+test("getting the progress of assigning a floating IP", async t => {
+  const worker = await createWorker(`
+    const actionId = 4321;
+    let c = 0;
+    app.get("/floating_ips/:floatingIPId/actions/:actionId", (req, res) => {
+      if (c === 0) {
+        res.status(200).json({
+          action: {
+            id: actionId,
+            progress: 50
+          }
+        });
+      } else if (c === 1) {
+        res.status(200).json({
+          action: {
+            id: actionId,
+            progress: 100
+          }
+        });
+      }
+
+      c++;
+      return;
+    });
+  `, { requestCount: 2 });
+  const { getAssignmentProgress } = proxyquire("../lib.js", {
+    "./config.js": {
+      API: `http://localhost:${worker.port}`
+    }
+  });
+
+  const progress = await getAssignmentProgress(1234, 4321)();
+  t.assert(progress === 50);
 });

@@ -29,6 +29,10 @@ inputs:
   floating-ip-id:
     description: "Allows to assign a floating IP to the server after deployment"
     required: false
+  floating-ip-assignment-timeout:
+    description: "Gives Hetzner some time (in Ms) to assign an IP to a server."
+    required: false
+    default: 10000
 
 runs:
   using: 'node12'
