@@ -234,6 +234,7 @@ test("if assigning a floating IP to a server is possible", async t => {
   const floatingIP = "127.0.0.1";
   const SERVER_ID = 1234;
   const hcloudToken = "abc";
+  const IPAssignmentTimeout = 10000;
 
   const worker = await createWorker(`
     const actionId = 4321;
@@ -296,6 +297,8 @@ test("if assigning a floating IP to a server is possible", async t => {
             return floatingIPId;
           case "hcloud-token":
             return hcloudToken;
+          case "floating-ip-assignment-timeout":
+            return IPAssignmentTimeout;
           default:
             return "mock value";
         }

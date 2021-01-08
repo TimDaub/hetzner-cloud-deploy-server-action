@@ -218,7 +218,7 @@ async function assignIP() {
     const body = await res.json();
 
     const expectedProgress = 100;
-    const done = periodicExecution(
+    const done = await periodicExecution(
       getAssignmentProgress(parsedIPId, body.action.id),
       expectedProgress,
       assignmentTimeout
