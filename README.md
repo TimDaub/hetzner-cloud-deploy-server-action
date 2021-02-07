@@ -44,6 +44,7 @@ jobs:
 - `server-name` MUST NOT contain spaces.
 - If you don't want the server to be deleted after the action has run, add
 `delete-server: false` as an input in your workflow
+- `ssh-key-name`'s value should be the name of the SSH key as recorded in the Hetzner's cloud console (Under Security -> SSH Keys)
 - The server's ipv4 is available to subsequent steps by accessing the env
 variable `SERVER_IPV4`.
 - By default, the action queries the to-be-launched server's port 22 (SSH) for
@@ -216,6 +217,10 @@ script's cleanup fails and the instance remains online. So if you're planning
 to run your tests many times or if you're planning to launch huge instances,
 please make sure to double check if some instances remain running after the
 action has completed. You have been warned.
+
+### What do these errors mean?
+- `When sending the request to Hetzner's API, an error occurred "Unprocessable Entity"`
+  - The data you are passing is syntactically correct, but Hetzner could not achieve the task. Make sure all your secrets are set correctly, and that your `ssh-key-name` is the same as in the Hetzner Cloud interface.
 
 ## License
 
