@@ -212,11 +212,19 @@ connect to the floating IP.
 
 ### Can I lose money when running this script?
 
-Yes, you certainly can. There may be instances where something within my
+**Yes, you certainly can.**
+
+There may be instances where something within my
 script's cleanup fails and the instance remains online. So if you're planning
 to run your tests many times or if you're planning to launch huge instances,
 please make sure to double check if some instances remain running after the
-action has completed. You have been warned.
+action has completed.
+
+Also, please note that [Hetzner bills per hours, not minutes](https://docs.hetzner.com/cloud/billing/faq/#how-do-you-bill-your-servers). This means that a 30 second run will be billed as a 1 hour run, a 61 minute run will be billed as a 2 hour run, etc. ([#14](https://github.com/TimDaub/hetzner-cloud-deploy-server-action/issues/14))
+
+If you push very frequently, you might want to ensure that your workflow requires explicit approval before running by using [GitHub's Environment approval mechanism](https://web.archive.org/web/20210209175158/https://www.aaron-powell.com/posts/2021-01-11-using-environments-for-approval-workflows-with-github/).
+
+You have been warned.
 
 ### What do these errors mean?
 - `When sending the request to Hetzner's API, an error occurred "Unprocessable Entity"`
