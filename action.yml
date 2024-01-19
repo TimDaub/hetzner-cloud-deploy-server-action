@@ -12,6 +12,10 @@ inputs:
   server-type:
     description: "The Hetzner server type you want your server to be."
     required: true
+  server-location:
+      description: "The location your server should be initiated in."
+      required: false
+      default: 1
   ssh-key-name:
     description: "The ssh key, you want your server to be provisioned with."
     required: true
