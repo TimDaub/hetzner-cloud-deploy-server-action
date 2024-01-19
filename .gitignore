@@ -6,3 +6,5 @@ node_modules
 public
 sqlite.db
 test/integration.js
+.idea
+*.iml
