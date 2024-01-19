@@ -12,7 +12,8 @@ const options = {
   server: {
     name: core.getInput("server-name"),
     image: core.getInput("server-image"),
-    type: core.getInput("server-type")
+    type: core.getInput("server-type"),
+    location: core.getInput("server-location")
   },
   sshKeyName: core.getInput("ssh-key-name"),
   hcloudToken: core.getInput("hcloud-token"),
@@ -33,6 +34,7 @@ async function deploy() {
         name: options.server.name,
         image: options.server.image,
         server_type: options.server.type,
+        location: options.server.location,
         ssh_keys: [options.sshKeyName]
       })
     });

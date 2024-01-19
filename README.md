@@ -22,6 +22,7 @@ jobs:
           server-name: "gh-actions-server"
           server-image: "ubuntu-20.04"
           server-type: "cx11"
+          server-location: "nbg1"
           ssh-key-name: "my key name"
           hcloud-token: ${{ secrets.HCLOUD_TOKEN }}
 ```
@@ -118,6 +119,25 @@ $ curl \
 "cpx51"
 ```
 
+### How do I get all possible locations?
+
+You can use the Hetzner Cloud
+[API](https://docs.hetzner.cloud/#server-types-get-all-server-types).  The
+following `curl` command works well with [jq](https://github.com/stedolan/jq):
+
+```bash
+$ curl \
+  -H "Authorization: Bearer $API_TOKEN" \
+  'https://api.hetzner.cloud/v1/locations' | jq '.locations[].name'
+
+"fsn1"
+"nbg1"
+"hel1"
+"ash"
+"hil"
+```
+
+
 ### How do I get the ID of a Floating IP?
 
 You can use the Hetzner Cloud
@@ -150,6 +170,7 @@ jobs:
           server-name: "gh-actions-server"
           server-image: "ubuntu-20.04"
           server-type: "cx11"
+          server-location: "nbg1"
           ssh-key-name: "my key name"
           hcloud-token: ${{ secrets.HCLOUD_TOKEN }}
       - uses: webfactory/ssh-agent@v0.4.1
@@ -175,6 +196,9 @@ assign a static IP to a server.
 By setting your DNS A-record to a floating IP and adding its ID as an input,
 you can hence make your launched server predictably-addressable.
 
+Be aware that the floating IP needs to be in the same location as the server. To 
+achieve this, use the additional parameter `server-location`. 
+
 Specifically, working with floating IPs can get a bit messy. Here's an example
 configuration.
 
@@ -188,6 +212,7 @@ jobs:
           server-name: "server"
           server-image: "ubuntu-20.04"
           server-type: "cx11"
+          server-location: "fsn1"
           ssh-key-name: "my key name"
           hcloud-token: ${{ secrets.HCLOUD_TOKEN }}
           startup-timeout: 40000

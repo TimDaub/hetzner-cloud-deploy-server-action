@@ -53,6 +53,8 @@ test("if a request creates a server on Hetzner Cloud", async t => {
             return options.server.type;
           case "server-image":
             return options.server.image;
+          case "server-location":
+            return options.server.location;
           case "ssh-key-name":
             return options.sshKeyName;
           case "hcloud-token":
@@ -91,7 +93,7 @@ test("if a server can be deleted in cleanup ", async t => {
   const worker = await createWorker(`
     app.delete("/servers/:id", (req, res) => {
       if (req.params.id) {
-        return res.status(200).send(); 
+        return res.status(200).send();
       } else {
         return res.status(400).send();
       }
@@ -118,6 +120,8 @@ test("if a server can be deleted in cleanup ", async t => {
             return options.server.image;
           case "ssh-key-name":
             return options.sshKeyName;
+          case "server-location":
+            return options.server.location;
           case "hcloud-token":
             return options.hcloudToken;
           case "server-id":
@@ -170,6 +174,8 @@ test("if a server is kept when delete-server input is set to false", async t => 
             return options.server.type;
           case "server-image":
             return options.server.image;
+          case "server-location":
+            return options.server.location;
           case "ssh-key-name":
             return options.sshKeyName;
           case "hcloud-token":
